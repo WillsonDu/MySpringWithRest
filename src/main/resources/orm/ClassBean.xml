@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "http://mybatis.org/dtd/mybatis-3-mapper.dtd" "mybatis-3-mapper.dtd" >
+<mapper namespace="ClassBean">
+	<resultMap type="com.lovo.bean.ClassBean" id="ClassResult">
+		<id property="id" column="cid" />
+		<result property="name" column="cname" />
+		<result property="des" column="cdes" />
+	</resultMap>
+
+	<resultMap type="com.lovo.bean.ClassBean"
+		id="ClassStudentResult" extends="ClassResult">
+		<collection property="students"
+			ofType="com.lovo.bean.StudentBean"
+			resultMap="StudentBean.StudentResult"></collection>
+	</resultMap>
+
+	<select id="selectAllClass" resultMap="ClassStudentResult">
+		select
+		c.id cid,c.name
+		cname,c.des cdes, s.* from
+		class c left join student s
+		on s.class_id=c.id
+		order by
+		c.id
+	</select>
+
+	<select id="selectClassById" resultMap="ClassResult">
+		select * from class
+		where
+		id=#{id}
+	</select>
+</mapper>

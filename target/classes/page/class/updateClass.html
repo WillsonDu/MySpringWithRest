@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<link href="/mySpringWithRest/bootstrap/css/bootstrap.css"
+	rel="stylesheet" />
+<script src="/mySpringWithRest/bootstrap/js/bootstrap.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery-1.9.1.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/bootstrap-paginator.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery.query.js"></script>
+<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+
+<script>
+	var id = $.query.get("id");
+
+	$(function() {
+		getClassInfo();
+	});
+
+	function getClassInfo() {
+		$.ajax({
+			url : "/mySpringWithRest/class/find/" + id,
+			dataType : "json",
+			type : "get",
+			success : function(data) {
+				alert(data);
+				alert(data.name + " " + data.id);
+				$('.c_name').val(data.name);
+				$('.c_id').val(data.id);
+			}
+		});
+	}
+	function submit() {
+		$
+				.ajax({
+					url : "/mySpringWithRest/class/update",
+					type : "put",
+					data : $('#updateClassForm').serialize(),
+					success : function(data) {
+						if (data === 'true') {
+							window.location.href = '/mySpringWithRest/page/class/showAllClass.html';
+						}
+					}
+				});
+	}
+</script>
+</head>
+<body>
+
+	<div class="container">
+		<form id="updateClassForm" action="javascript:submit()">
+			班级名称: <input type="text" class="c_name" name="name" /> <br /> <input
+				type="hidden" name="id" class="c_id" /> <input type="submit"
+				value="确认修改">
+		</form>
+	</div>
+
+
+</body>
+</html>

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xmlns:amq="http://activemq.apache.org/schema/core"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:p="http://www.springframework.org/schema/p"
+ 	xmlns:jms="http://www.springframework.org/schema/jms"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.0.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+       http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+       http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-4.0.xsd
+       http://www.springframework.org/schema/jms
+       http://www.springframework.org/schema/jms/spring-jms-4.0.xsd
+       http://activemq.apache.org/schema/core
+       http://activemq.apache.org/schema/core/activemq-core-5.14.1.xsd ">
+
+	<!-- 加入Spring注解的支持 -->
+	<context:annotation-config></context:annotation-config>
+
+	<!-- 数据库配置文件 -->
+	<context:property-placeholder
+		location="classpath:appConfig.properties,classpath:redis.properties" />
+
+	<!-- 扫描 -->
+	<context:component-scan
+		base-package="com.lovo.*"></context:component-scan>
+
+	<!-- 数据源配置 -->
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driver}"></property>
+		<property name="url" value="${jdbc.url}"></property>
+		<property name="username" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+	</bean>
+
+	<!-- 整合hibernate -->
+	<bean id="hibernateSessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="packagesToScan">
+			<list>
+				<value>com.lovo.bean</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<value>
+				<!-- 是否在控制台显示sql -->
+				hibernate.show_sql = true
+				<!-- 设置数据库方言 -->
+				hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+				<!-- 是否格式化sql，优化显示 -->
+				hibernate.format_sql=true
+				<!-- 是否开启查询缓存 -->
+				hibernate.cache.use_query_cache=false
+				<!-- 是否开启二级缓存 -->
+				hibernate.cache.use_second_level_cache=false
+				<!-- 数据库批量查询最大数 -->
+				hibernate.jdbc.fetch_size=50
+				<!-- 数据库批量更新、添加、删除操作最大数 -->
+				hibernate.jdbc.batch_size=50
+			</value>
+		</property>
+	</bean>
+
+	<!-- 与mybatis的整合 -->
+	<bean id="mybatisSessionFactory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="configLocation" value="classpath:mybatis.xml"></property>
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:orm/*.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- 配置mybatis sqlsession类模板对象 -->
+	<bean id="sqlSessionTemplate"
+		class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="mybatisSessionFactory"></constructor-arg>
+	</bean>
+
+	<!-- 定义hibernate事务管理器 -->
+	<bean id="hb_transationManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="hibernateSessionFactory"></property>
+	</bean>
+
+    <!-- 配置hibernate sqlsession类模板对象 -->
+	<bean id="hibernateTemplate"
+		class="org.springframework.orm.hibernate3.HibernateTemplate">
+		<constructor-arg>
+			<ref bean="hibernateSessionFactory" />
+		</constructor-arg>
+	</bean>
+
+	<!-- 利用注解实现事务 -->
+	<tx:annotation-driven transaction-manager="hb_transationManager" />
+
+
+	<!-- Web service配置 -->
+	<bean id="webServiceImpl"
+		class="com.lovo.service.impl.WebServiceImpl">
+		<property name="studentService" ref="studentServiceImpl"></property>
+	</bean>
+
+	<jaxws:server address="/service"
+		serviceClass="com.lovo.service.IWebService">
+		<jaxws:serviceBean>
+			<ref bean="webServiceImpl" />
+		</jaxws:serviceBean>
+	</jaxws:server>
+
+
+	<!-- redis相关配置 -->
+
+	<!-- jedis 配置 -->
+	<bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
+		<property name="maxIdle" value="${redis.maxIdle}" />
+		<property name="maxWaitMillis" value="${redis.maxWait}" />
+		<property name="testOnBorrow" value="${redis.testOnBorrow}" />
+	</bean>
+
+	<!-- redis服务器中心 -->
+	<bean id="connectionFactory"
+		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+		<property name="poolConfig" ref="poolConfig" />
+		<property name="port" value="${redis.port}" />
+		<property name="hostName" value="${redis.host}" />
+		<property name="password" value="${redis.password}" />
+		<property name="timeout" value="${redis.timeout}"></property>
+	</bean>
+
+	<!-- redis template -->
+	<bean id="redisTemplate"
+		class="org.springframework.data.redis.core.RedisTemplate">
+		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="keySerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="valueSerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+		</property>
+	</bean>
+
+	<!-- cache配置 -->
+	<bean id="redisMethodInterceptor"
+		class="com.lovo.interceptor.MyRedisMethodInterceptor">
+		<property name="redisTemplate" ref="redisTemplate" />
+	</bean>
+
+	<!-- aop配置切点跟通知(此处未生效，不知何原因) -->
+	<!-- 
+	<bean id="methodCachePointCut"
+		class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">
+		<property name="advice" ref="redisMethodInterceptor" />
+		<property name="pattern" value=".*ServiceImpl.*find.*"/>
+	</bean>
+	 -->
+	
+	<aop:config>
+		<aop:pointcut expression="(execution(* com.lovo.service.impl.*.get*(..))) or (execution(* com.lovo.service.impl.*.find*(..))) or (execution(* com.lovo.service.impl.*.query*(..)))" id="pointcut"/>
+		<aop:advisor advice-ref="redisMethodInterceptor" pointcut-ref="pointcut"/>
+	</aop:config>
+	
+
+	<!-- 引入active-mq.xml -->
+	<import resource="active-mq.xml"/>
+	
+	<!-- 引入mongodb.xml -->
+	<import resource="mongodb.xml"/>
+	
+	<!-- 开启aop注解方式 -->
+	
+</beans>

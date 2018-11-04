@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xmlns:amq="http://activemq.apache.org/schema/core"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:p="http://www.springframework.org/schema/p"
+ 	xmlns:jms="http://www.springframework.org/schema/jms"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.0.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+       http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+       http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-4.0.xsd
+       http://www.springframework.org/schema/jms
+       http://www.springframework.org/schema/jms/spring-jms-4.0.xsd
+       http://activemq.apache.org/schema/core
+       http://activemq.apache.org/schema/core/activemq-core-5.14.1.xsd">
+
+       
+       
+       
+       
+       
+	<!-- active mq相关配置 -->
+	<context:component-scan base-package="com.lovo.activemq"></context:component-scan>
+        
+    <!-- 真正可以产生Connection的ConnectionFactory，由对应的 JMS服务厂商提供 -->
+    <!-- 
+    <amq:connectionFactory id="amqConnectionFactory" brokerURL="tcp://localhost:61616"></amq:connectionFactory>
+     -->
+    <bean id="amqConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="tcp://localhost:61616" />
+	</bean>
+    
+    <!-- Spring用于管理真正的ConnectionFactory的ConnectionFactory -->
+    <bean id="mq_connectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <!-- 目标ConnectionFactory对应真实的可以产生JMS Connection的ConnectionFactory -->
+        <property name="targetConnectionFactory" ref="amqConnectionFactory" />
+        <property name="sessionCacheSize" value="100" />
+        
+        <!-- 
+        <constructor-arg ref="amqConnectionFactory" />
+         -->
+         
+    </bean>
+    
+    <!-- 定义消息队列（Queue）——点对点式 -->
+    <bean id="demoQueueDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <!-- 设置消息队列的名字 -->
+        <constructor-arg>
+            <value>dxQueue_class</value>
+        </constructor-arg>
+    </bean>
+    
+   	<!--这个是队列目的地 ——发布/订阅式-->
+	<bean id="demoTopicDestination" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg>
+			<value>dxTopic_class</value>
+		</constructor-arg>
+	</bean>
+    
+    
+    <!-- 配置JMS模板（Queue），Spring提供的JMS工具类，它发送、接收消息。 -->
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="mq_connectionFactory" />
+        <!-- 
+        <property name="defaultDestination" ref="demoQueueDestination" />
+        <property name="receiveTimeout" value="10000" />
+        -->
+        <!-- true是topic，false是queue，默认是false，此处显示写出false -->
+        <!-- 
+        <property name="pubSubDomain" value="false" />
+        -->
+    </bean>
+    
+    <!-- 以上配置属于mq消息发送方配置 -->
+    
+    <!-- 以下配置，加上demoQueueDestination(或者demoTopicDestination)和 mq_connectionFactory、amqConnectionFactory的配置即可模拟消息监听方的配置-->
+    
+    <!-- 消息监听器 -->
+    <bean id="messageListener" class="com.lovo.activemq.consumer.MessageConsumerService" />
+    
+    <!-- 消息监听容器 -->
+    <bean id="queueListenerContainer"
+        class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="mq_connectionFactory" />
+        <property name="destination" ref="demoQueueDestination" />
+        <!-- <property name="destination" ref="demoTopicDestination" /> -->
+        <property name="messageListener" ref="messageListener" />
+    </bean>
+       
+</beans>

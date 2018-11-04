@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<link href="/mySpringWithRest/bootstrap/css/bootstrap.css"
+	rel="stylesheet" />
+<script src="/mySpringWithRest/bootstrap/js/bootstrap.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery-1.9.1.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/bootstrap-paginator.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery.query.js"></script>
+<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+
+<script type="text/javascript">
+	function addClass() {
+		var name = $('#l_name').val().trim();
+		if (name == undefined || name === '') {
+			$('#error').html('名称不能为空！');
+			return;
+		}
+
+		$
+				.ajax({
+					url : "/mySpringWithRest/class/addClass",
+					type : "post",
+					data : $('#addClassForm').serialize(),
+					success : function(result) {
+						if (result === 'true') {
+							window.location.href = '/mySpringWithRest/page/class/showAllClass.html';
+						} else {
+							$('#error').html('Oh no! Something is wrong!');
+						}
+					}
+				});
+	}
+</script>
+</head>
+<body>
+
+	<div class="container">
+		<form id="addClassForm">
+			班级名称: <input type="text" id="l_name" name="name"><br />
+			<div id="error"></div>
+			<a href="javascript:addClass()" class="btn btn-primary"> <i
+				class="icon-search icon-white"></i>创建
+			</a>
+		</form>
+	</div>
+
+
+</body>
+</html>

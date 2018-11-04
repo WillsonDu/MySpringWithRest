@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<link href="/mySpringWithRest/bootstrap/css/bootstrap.css"
+	rel="stylesheet" />
+<script src="/mySpringWithRest/bootstrap/js/bootstrap.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery-1.9.1.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/bootstrap-paginator.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery.query.js"></script>
+<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+
+<script>
+	var id = $.query.get("id");
+
+	$(function() {
+		getStudentInfo();
+	});
+
+	function getStudentInfo() {
+		$
+				.ajax({
+					url : "/mySpringWithRest/student/find/" + id,
+					dataType : "json",
+					type : "get",
+					success : function(data) {
+						$('.c_name').val(data.name);
+						$('.c_id').val(data.id);
+						$('.c_age').val(data.age);
+
+						var stuClassBean = data.classBean;
+
+						$
+								.ajax({
+									url : "/mySpringWithRest/class/all",
+									type : "GET",
+									dataType : "json",
+									success : function(result) {
+										var str = '';
+										for (var i = 0; i < result.length; i++) {
+											var classBean = result[i];
+
+											if (stuClassBean != null
+													&& stuClassBean.id === classBean.id) {
+												str += '<option value="'+classBean.id+'" selected="selected">'
+														+ classBean.name
+														+ '</option>';
+											} else {
+												str += '<option value="'+classBean.id+'">'
+														+ classBean.name
+														+ '</option>';
+											}
+										}
+										$('#classSelect').html(str);
+									}
+								});
+
+					}
+				});
+	}
+	function submit() {
+		$
+				.ajax({
+					url : "/mySpringWithRest/student/update",
+					type : "put",
+					data : $('#updateClassForm').serialize(),
+					success : function(data) {
+						if (data === 'true') {
+							window.location.href = '/mySpringWithRest/page/class/showAllClass.html';
+						}
+					}
+				});
+	}
+</script>
+</head>
+<body>
+
+	<div class="container">
+		<form id="updateClassForm" action="javascript:submit()">
+			姓名: <input type="text" class="c_name" name="name" /> <br />年龄: <input
+				type="text" name="age" class="c_age" /> <input type="hidden"
+				name="id" class="c_id" /><br />所属班级:<select id="classSelect"
+				name="classBean.id">
+
+			</select><br /> <input type="submit" value="确认修改">
+		</form>
+	</div>
+
+
+</body>
+</html>

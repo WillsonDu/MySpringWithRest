@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<link href="/mySpringWithRest/bootstrap/css/bootstrap.css"
+	rel="stylesheet" />
+<script src="/mySpringWithRest/bootstrap/js/bootstrap.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery-1.9.1.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/bootstrap-paginator.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery.query.js"></script>
+<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+
+<script>
+	$(function() {
+		resetPage();
+	});
+
+	function resetPage() {
+		$
+				.ajax({
+					url : "/mySpringWithRest/class/all",
+					type : "GET",
+					dataType : "json",
+					success : function(result) {
+						var str = '';
+						for (var i = 0; i < result.length; i++) {
+							var classBean = result[i];
+							str += '<tr><td>'
+									+ classBean.id
+									+ '</td><td>'
+									+ classBean.name
+									+ '</td><td>'
+									+ classBean.students.length
+									+ '</td><td>'
+									+ '<a href="/mySpringWithRest/page/class/updateClass.html?id='
+									+ classBean.id
+									+ '">修改</a>/<a href="javascript:deleteClass('
+									+ classBean.id + ')">删除</a>' + '</td></tr>';
+						}
+						$('#classTable').html(str);
+					}
+				});
+
+	}
+
+	function deleteClass(id) {
+		$.ajax({
+			url : '/mySpringWithRest/class/delete/' + id,
+			type : 'delete',
+			success : function(data) {
+				if (data === 'true') {
+					resetPage();
+				}
+			}
+		});
+	}
+</script>
+</head>
+<body>
+	<div class="container">
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>id</th>
+					<th>班级名称</th>
+					<th>学生人数</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody id="classTable">
+
+			</tbody>
+		</table>
+		<div id="cutDiv"></div>
+		<a href="/mySpringWithRest/page/class/addClass.html"
+			class="btn btn-primary"><i class="icon-book icon-white"></i>添加班级</a>
+		<a href="/mySpringWithRest/page/student/showAllStudent.html"
+			class="btn btn-primary"><i class="icon-book icon-white"></i>查看所有学生</a>
+	</div>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<link href="/mySpringWithRest/bootstrap/css/bootstrap.css"
+	rel="stylesheet" />
+<script src="/mySpringWithRest/bootstrap/js/bootstrap.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery-1.9.1.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/bootstrap-paginator.js"></script>
+<script src="/mySpringWithRest/bootstrap/js/jquery.query.js"></script>
+<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+
+<script>
+	var id = $.query.get("id");
+
+	$(function() {
+		queryAllClass();
+	});
+
+	function submit() {
+		$
+				.ajax({
+					url : "/mySpringWithRest/student/add",
+					type : "post",
+					data : $('#addStudentForm').serialize(),
+					success : function(data) {
+						if (data === 'true') {
+							window.location.href = '/mySpringWithRest/page/student/showAllStudent.html';
+						}
+					}
+				});
+	}
+
+	function queryAllClass() {
+		$.ajax({
+			url : "/mySpringWithRest/class/all",
+			type : "GET",
+			dataType : "json",
+			success : function(result) {
+				var str = '';
+				for (var i = 0; i < result.length; i++) {
+					var classBean = result[i];
+					str += '<option value="'+classBean.id+'">' + classBean.name
+							+ '</option>';
+				}
+				$('#classSelect').html(str);
+			}
+		});
+	}
+</script>
+</head>
+<body>
+
+	<div class="container">
+		<form id="addStudentForm" action="javascript:submit()">
+			姓名: <input type="text" name="name" /> <br /> 年龄:<input type="text"
+				name="age" style="width:60px;" /><br />班級：<select
+				name="classBean.id" id="classSelect">
+			</select> <br /> <input type="submit" value="提交">
+		</form>
+	</div>
+
+
+</body>
+</html>
